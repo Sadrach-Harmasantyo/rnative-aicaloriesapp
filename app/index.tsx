@@ -1,6 +1,7 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Colors } from "../constants/Colors";
 
 export default function Index() {
   const { signOut, isSignedIn } = useAuth();
@@ -28,28 +29,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 8,
-    color: '#1f2937',
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: Colors.textLight,
     marginBottom: 32,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#ef4444',
+    backgroundColor: Colors.danger,
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   buttonText: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: '600',
     fontSize: 16,
   }

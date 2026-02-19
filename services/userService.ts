@@ -9,8 +9,26 @@ export interface UserData {
     lastName?: string | null;
     profileImage?: string | null;
     createdAt?: number;
+    // Onboarding Data
+    gender?: string;
+    goal?: string;
+    workoutFrequency?: string;
+    birthDate?: { day: string; month: string; year: string };
+    height?: number; // stored in cm or unit agnostic
+    weight?: number; // stored in kg
+    onboardingCompleted?: boolean;
+    fitnessPlan?: {
+        dailyCalories: number;
+        macros: {
+            protein: number;
+            carbs: number;
+            fats: number;
+        };
+        waterIntake: string;
+        fitnessTips: string[];
+        workoutPlan: string;
+    };
 }
-
 
 export const saveUserToFirestore = async (user: UserData) => {
     try {
@@ -20,10 +38,7 @@ export const saveUserToFirestore = async (user: UserData) => {
         if (userSnap.exists()) {
             // User exists, update fields but don't overwrite createdAt
             await setDoc(userRef, {
-                email: user.email,
-                firstName: user.firstName || null,
-                lastName: user.lastName || null,
-                profileImage: user.profileImage || null,
+                ...user, // Spread new fields to update
             }, { merge: true });
             console.log("User data updated in Firestore");
         } else {
@@ -31,10 +46,25 @@ export const saveUserToFirestore = async (user: UserData) => {
             await setDoc(userRef, {
                 ...user,
                 createdAt: Date.now(),
+                onboardingCompleted: false, // Default to false for new users
             });
             console.log("New user created in Firestore");
         }
     } catch (error) {
         console.error("Error saving user to Firestore:", error);
+    }
+};
+
+export const getUserData = async (userId: string): Promise<UserData | null> => {
+    try {
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            return userSnap.data() as UserData;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+        return null;
     }
 };

@@ -4,6 +4,7 @@ import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Colors } from "../../constants/Colors";
 import { useWarmUpBrowser } from "../../hooks/useWarmUpBrowser";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -132,7 +133,7 @@ export default function SignIn() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.background,
     },
     scrollContainer: {
         flexGrow: 1,
@@ -151,12 +152,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#111827',
+        color: Colors.text,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: '#6b7280',
+        color: Colors.textLight,
         fontWeight: '500',
     },
     formContainer: {
@@ -168,26 +169,26 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#374151',
+        color: Colors.text,
         marginBottom: 8,
         marginLeft: 4,
     },
     input: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: Colors.inputBackground,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: Colors.inputBorder,
         borderRadius: 16,
         padding: 16,
         fontSize: 16,
-        color: '#1f2937',
+        color: Colors.text,
     },
     button: {
-        backgroundColor: '#4f46e5',
+        backgroundColor: Colors.primary,
         borderRadius: 16,
         padding: 18,
         alignItems: 'center',
         marginTop: 12,
-        shadowColor: '#4f46e5',
+        shadowColor: Colors.primary,
         shadowOffset: {
             width: 0,
             height: 4,
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     buttonText: {
-        color: '#fff',
+        color: Colors.white,
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: '#e5e7eb',
+        backgroundColor: Colors.inputBorder,
     },
     dividerText: {
         marginHorizontal: 16,
@@ -217,9 +218,9 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     googleButton: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: Colors.googleButtonBorder,
         borderRadius: 16,
         padding: 18,
         alignItems: 'center',
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     googleButtonText: {
-        color: '#374151',
+        color: Colors.text,
         fontSize: 16,
         fontWeight: '600',
         marginLeft: 8,
@@ -238,11 +239,11 @@ const styles = StyleSheet.create({
         marginTop: 32,
     },
     footerText: {
-        color: '#6b7280',
+        color: Colors.textLight,
         fontSize: 14,
     },
     linkText: {
-        color: '#4f46e5',
+        color: Colors.primary,
         fontSize: 14,
         fontWeight: 'bold',
     },
