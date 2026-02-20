@@ -88,7 +88,7 @@ export default function GeneratingScreen() {
                 await AsyncStorage.setItem(`onboardingCompleted_${user.id}`, 'true');
 
                 // Navigate Home
-                router.replace("/");
+                router.replace("/(tabs)");
             } catch (error) {
                 console.error("Error saving data:", error);
             }
