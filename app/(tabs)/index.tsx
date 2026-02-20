@@ -1,7 +1,8 @@
+import { Colors } from "@/constants/Colors";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Colors } from "../constants/Colors";
+
 
 export default function Index() {
   const { signOut, isSignedIn } = useAuth();

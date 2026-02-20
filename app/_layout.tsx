@@ -40,7 +40,7 @@ function InitialLayout() {
           if (localOnboarding === 'true') {
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Local=true)");
-              router.replace("/");
+              router.replace("/(tabs)");
             }
             return;
           }
@@ -54,7 +54,7 @@ function InitialLayout() {
             await AsyncStorage.setItem(storageKey, 'true');
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Firestore=true)");
-              router.replace("/");
+              router.replace("/(tabs)");
             }
           } else {
             console.log("Onboarding incomplete. Current segment:", segments[0]);
