@@ -1,36 +1,86 @@
 import { Colors } from "@/constants/Colors";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/clerk-expo";
+import { LinearGradient } from "expo-linear-gradient";
 import { Redirect } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { CalendarStrip } from "../../components/CalendarStrip";
+import { CaloriesCard } from "../../components/CaloriesCard";
+import { HomeHeader } from "../../components/HomeHeader";
+import { RecentActivity } from "../../components/RecentActivity";
+import { WaterCard } from "../../components/WaterCard";
 
 export default function Index() {
   const { signOut, isSignedIn } = useAuth();
-  const { user } = useUser();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome {user?.firstName}!</Text>
-      <Text style={styles.subtitle}>You are signed in to AI Calories Tracker.</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <LinearGradient
+        colors={['#86efac', Colors.background]} // Gradient from light green to background
+        style={styles.container}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.3 }} // Gradient ends about 30% down the page
+      >
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+          <HomeHeader />
 
-      <TouchableOpacity onPress={() => signOut()} style={styles.button}>
-        <Text style={styles.buttonText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
+          <View style={styles.calendarCardContainer}>
+            <CalendarStrip
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+            />
+          </View>
+
+          <CaloriesCard selectedDate={selectedDate} />
+          <WaterCard selectedDate={selectedDate} />
+          <RecentActivity selectedDate={selectedDate} />
+
+          <View style={styles.content}>
+            <TouchableOpacity onPress={() => signOut()} style={[styles.button, { marginTop: 40, alignSelf: 'center' }]}>
+              <Text style={styles.buttonText}>Sign Out (Dev)</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  calendarCardContainer: {
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    // Shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    // Elevation for Android
+    elevation: 3,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    backgroundColor: Colors.background,
   },
   title: {
     fontSize: 24,

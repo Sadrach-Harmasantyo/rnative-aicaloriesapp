@@ -1,6 +1,6 @@
 import { ClerkLoaded, ClerkProvider, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Slot, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { getUserData, saveUserToFirestore } from "../services/userService";
 import { tokenCache } from "../utils/tokenCache";
@@ -40,7 +40,7 @@ function InitialLayout() {
           if (localOnboarding === 'true') {
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Local=true)");
-              router.replace("/(tabs)");
+              router.replace("/(tabs)/");
             }
             return;
           }
@@ -54,7 +54,7 @@ function InitialLayout() {
             await AsyncStorage.setItem(storageKey, 'true');
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Firestore=true)");
-              router.replace("/(tabs)");
+              router.replace("/(tabs)/");
             }
           } else {
             console.log("Onboarding incomplete. Current segment:", segments[0]);
@@ -87,7 +87,21 @@ function InitialLayout() {
     }
   }, [isSignedIn, user]);
 
-  return <Slot />;
+  return (
+    <Stack>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="add-log"
+        options={{
+          presentation: "modal",
+          title: "Add Activity",
+          headerShown: false // Custom UI inside the modal
+        }}
+      />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {

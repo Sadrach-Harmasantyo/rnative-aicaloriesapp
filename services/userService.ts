@@ -68,3 +68,30 @@ export const getUserData = async (userId: string): Promise<UserData | null> => {
         return null;
     }
 };
+
+export const updateFitnessGoals = async (
+    userId: string,
+    newGoals: { dailyCalories: number; protein: number; carbs: number; fats: number }
+): Promise<boolean> => {
+    try {
+        const userRef = doc(db, "users", userId);
+
+        // We only want to update the specific fields inside fitnessPlan without overwriting other things
+        await setDoc(userRef, {
+            fitnessPlan: {
+                dailyCalories: newGoals.dailyCalories,
+                macros: {
+                    protein: newGoals.protein,
+                    carbs: newGoals.carbs,
+                    fats: newGoals.fats
+                }
+            }
+        }, { merge: true });
+
+        console.log("Fitness goals updated in Firestore");
+        return true;
+    } catch (error) {
+        console.error("Error updating fitness goals:", error);
+        return false;
+    }
+};
