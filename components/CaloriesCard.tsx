@@ -129,16 +129,20 @@ export function CaloriesCard({ selectedDate }: { selectedDate: Date }) {
     const fatGoal = userData?.fitnessPlan?.macros.fats || defaultFat;
 
     const caloriesConsumed = dailyLog?.caloriesConsumed || 0;
+    const caloriesBurned = dailyLog?.caloriesBurned || 0;
     const proteinConsumed = dailyLog?.proteinConsumed || 0;
     const carbsConsumed = dailyLog?.carbsConsumed || 0;
     const fatConsumed = dailyLog?.fatConsumed || 0;
 
-    const caloriesLeft = Math.max(0, caloriesGoal - caloriesConsumed);
+    // Remaining calories are what you have allowed to eat = Goal - Consumed + Burned
+    const caloriesLeft = Math.max(0, caloriesGoal - caloriesConsumed + caloriesBurned);
     const proteinLeft = Math.max(0, proteinGoal - proteinConsumed);
     const carbsLeft = Math.max(0, carbsGoal - carbsConsumed);
     const fatLeft = Math.max(0, fatGoal - fatConsumed);
 
-    const progress = (caloriesGoal - caloriesLeft) / caloriesGoal;
+    // Progress = consumed / total allowable (Goal + Burned) capped between 0 and 1
+    const totalAllowed = caloriesGoal + caloriesBurned;
+    const progress = Math.min(1, Math.max(0, caloriesConsumed / totalAllowed));
 
     const macros = {
         carbs: `${carbsLeft}g`,

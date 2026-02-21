@@ -1,17 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { AddActionModal } from "../../components/AddActionModal";
 import { Colors } from "../../constants/Colors";
 
 // Custom Floating Action Button
 const CustomTabBarButton = ({ children, onPress }: any) => {
-    const router = useRouter();
     return (
         <View>
             <TouchableOpacity
                 style={styles.floatingButton}
-                onPress={() => router.push('/add-log')}
+                onPress={onPress}
                 activeOpacity={0.8}
             >
                 <Ionicons name="add" size={32} color={Colors.white} />
@@ -21,49 +21,72 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
 };
 
 export default function TabLayout() {
-    return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: Colors.white,
-                tabBarInactiveTintColor: '#A0A0A0', // Gray for inactive
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <Ionicons name={focused ? "home" : "home-outline"} size={28} color={Colors.primary} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="analytics"
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={28} color={Colors.primary} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="profile"
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <Ionicons name={focused ? "person" : "person-outline"} size={28} color={Colors.primary} />
-                    ),
-                }}
-            />
+    const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const router = useRouter();
 
-            {/* Floating Plus Button (Placed after the 3 tabs) */}
-            <Tabs.Screen
-                name="add"
-                options={{
-                    tabBarButton: (props) => <CustomTabBarButton {...props} />,
+    const handleActionSelect = (action: 'exercise' | 'water' | 'database' | 'scan') => {
+        setAddModalVisible(false);
+        // Navigate or handle based on action
+        if (action === 'water' || action === 'database') {
+            router.push('/add-log');
+        } else if (action === 'exercise') {
+            router.push('/log-exercise');
+        } else {
+            console.log(`Action ${action} selected - functionality to be built`);
+        }
+    };
+
+    return (
+        <>
+            <Tabs
+                screenOptions={{
+                    headerShown: false,
+                    tabBarShowLabel: false,
+                    tabBarStyle: styles.tabBar,
+                    tabBarActiveTintColor: Colors.white,
+                    tabBarInactiveTintColor: '#A0A0A0', // Gray for inactive
                 }}
+            >
+                <Tabs.Screen
+                    name="index"
+                    options={{
+                        tabBarIcon: ({ focused }) => (
+                            <Ionicons name={focused ? "home" : "home-outline"} size={28} color={Colors.primary} />
+                        ),
+                    }}
+                />
+                <Tabs.Screen
+                    name="analytics"
+                    options={{
+                        tabBarIcon: ({ focused }) => (
+                            <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={28} color={Colors.primary} />
+                        ),
+                    }}
+                />
+                <Tabs.Screen
+                    name="profile"
+                    options={{
+                        tabBarIcon: ({ focused }) => (
+                            <Ionicons name={focused ? "person" : "person-outline"} size={28} color={Colors.primary} />
+                        ),
+                    }}
+                />
+
+                {/* Floating Plus Button (Placed after the 3 tabs) */}
+                <Tabs.Screen
+                    name="add"
+                    options={{
+                        tabBarButton: (props) => <CustomTabBarButton {...props} onPress={() => setAddModalVisible(true)} />,
+                    }}
+                />
+            </Tabs>
+
+            <AddActionModal
+                visible={isAddModalVisible}
+                onClose={() => setAddModalVisible(false)}
+                onSelectAction={handleActionSelect}
             />
-        </Tabs>
+        </>
     );
 }
 

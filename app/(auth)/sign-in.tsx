@@ -72,7 +72,7 @@ export default function SignIn() {
             style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.headerContainer}>
-                    <Image source={require('../../assets/images/react-logo.png')} style={styles.logo} />
+                    <Image source={require('../../assets/images/logo-nativecal.jpeg')} style={styles.logo} />
                     <Text style={styles.title}>Welcome Back</Text>
                     <Text style={styles.subtitle}>Sign in to your account</Text>
                 </View>
@@ -148,6 +148,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         marginBottom: 24,
+        borderRadius: 16,
     },
     title: {
         fontSize: 32,
