@@ -1,7 +1,9 @@
 import { ClerkLoaded, ClerkProvider, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { Colors } from "../constants/Colors";
 import { getUserData, saveUserToFirestore } from "../services/userService";
 import { tokenCache } from "../utils/tokenCache";
 
@@ -40,7 +42,7 @@ function InitialLayout() {
           if (localOnboarding === 'true') {
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Local=true)");
-              router.replace("/(tabs)/");
+              router.replace("/(tabs)");
             }
             return;
           }
@@ -54,7 +56,7 @@ function InitialLayout() {
             await AsyncStorage.setItem(storageKey, 'true');
             if (inAuthGroup || inOnboardingGroup) {
               console.log("Redirecting to Home from Auth/Onboarding (Firestore=true)");
-              router.replace("/(tabs)/");
+              router.replace("/(tabs)");
             }
           } else {
             console.log("Onboarding incomplete. Current segment:", segments[0]);
@@ -100,6 +102,10 @@ function InitialLayout() {
           headerShown: false // Custom UI inside the modal
         }}
       />
+      <Stack.Screen name="log-exercise" options={{ headerShown: false }} />
+      <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="manual-exercise" options={{ headerShown: false }} />
+      <Stack.Screen name="calculated-calories" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -108,6 +114,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
+        <StatusBar backgroundColor={Colors.primary} style="light" />
         <InitialLayout />
       </ClerkLoaded>
     </ClerkProvider>

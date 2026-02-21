@@ -7,10 +7,14 @@ export interface ActivityItem {
     title: string;
     calories?: number;
     water?: number; // glasses
+    type?: "food" | "exercise";
+    duration?: number;
+    intensity?: string;
 }
 
 export interface DailyLog {
     caloriesConsumed: number;
+    caloriesBurned: number;
     proteinConsumed: number;
     carbsConsumed: number;
     fatConsumed: number;
@@ -20,6 +24,7 @@ export interface DailyLog {
 
 const DEFAULT_LOG: DailyLog = {
     caloriesConsumed: 0,
+    caloriesBurned: 0,
     proteinConsumed: 0,
     carbsConsumed: 0,
     fatConsumed: 0,
@@ -69,6 +74,7 @@ export const updateDailyLog = async (
         // Usually, when adding a log, we *add* to the consumed amount.
         const newLog: DailyLog = {
             caloriesConsumed: currentLog.caloriesConsumed + (updates.caloriesConsumed || 0),
+            caloriesBurned: (currentLog.caloriesBurned || 0) + (updates.caloriesBurned || 0),
             proteinConsumed: currentLog.proteinConsumed + (updates.proteinConsumed || 0),
             carbsConsumed: currentLog.carbsConsumed + (updates.carbsConsumed || 0),
             fatConsumed: currentLog.fatConsumed + (updates.fatConsumed || 0),

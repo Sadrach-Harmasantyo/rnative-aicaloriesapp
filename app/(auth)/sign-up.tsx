@@ -88,7 +88,7 @@ export default function SignUpScreen() {
             style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.headerContainer}>
-                    <Image source={require('../../assets/images/react-logo.png')} style={styles.logo} />
+                    <Image source={require('../../assets/images/logo-nativecal.jpeg')} style={styles.logo} />
                     <Text style={styles.title}>{pendingVerification ? "Verify Email" : "Create Account"}</Text>
                     <Text style={styles.subtitle}>{pendingVerification ? "Check your email for the code" : "Sign up to get started"}</Text>
                 </View>
@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         marginBottom: 24,
+        borderRadius: 16,
     },
     title: {
         fontSize: 32,

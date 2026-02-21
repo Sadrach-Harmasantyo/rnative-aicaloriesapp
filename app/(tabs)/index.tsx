@@ -55,7 +55,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#86efac',
   },
   container: {
     flex: 1,

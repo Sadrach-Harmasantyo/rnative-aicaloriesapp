@@ -67,7 +67,51 @@ export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
             ) : (
                 <View style={styles.listContainer}>
                     {activities.slice().sort((a, b) => b.timestamp - a.timestamp).map((activity, index) => {
-                        // Determine icon and color based on content
+                        // Format timestamp nicely for both block types
+                        const timeString = format(new Date(activity.timestamp), "h:mm a");
+                        const isLast = index === activities.length - 1;
+
+                        // Special Full-Width Card for Detailed Exercise Records
+                        if (activity.type === 'exercise') {
+                            const excName = activity.title.split(' Session')[0] || 'Workout';
+                            const isRun = excName.toLowerCase().includes('run');
+                            const excIcon = isRun ? 'walk' : 'barbell';
+
+                            return (
+                                <View key={activity.id || index.toString()} style={styles.exerciseCard}>
+                                    {/* Oversized Icon Column */}
+                                    <View style={styles.exerciseIconWrapper}>
+                                        <Ionicons name={excIcon} size={36} color="#f59e0b" />
+                                    </View>
+
+                                    {/* Content Column */}
+                                    <View style={styles.exerciseContent}>
+                                        <View style={styles.exerciseHeader}>
+                                            <Text style={styles.exerciseName}>{excName}</Text>
+                                            <Text style={styles.activityTime}>{timeString}</Text>
+                                        </View>
+
+                                        <View style={styles.exerciseBurnRow}>
+                                            <Ionicons name="flame" size={16} color="#f59e0b" style={{ marginRight: 4 }} />
+                                            <Text style={styles.exerciseCaloriesText}>{activity.calories} kcal burned</Text>
+                                        </View>
+
+                                        <View style={styles.exerciseMetaRow}>
+                                            <Ionicons name="pulse" size={14} color={Colors.textLight} style={{ marginRight: 4 }} />
+                                            <Text style={styles.exerciseMetaText}>
+                                                {activity.intensity || 'Medium'} Intensity
+                                            </Text>
+                                            <Ionicons name="time-outline" size={14} color={Colors.textLight} style={{ marginLeft: 12, marginRight: 4 }} />
+                                            <Text style={styles.exerciseMetaText}>
+                                                {activity.duration || 30}m
+                                            </Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            );
+                        }
+
+                        // Determine icon and color based on generic content
                         let iconName: keyof typeof Ionicons.glyphMap = "checkmark-circle-outline";
                         let iconColor = Colors.primary;
 
@@ -78,10 +122,6 @@ export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
                             iconName = "fast-food-outline";
                             iconColor = "#f59e0b"; // Food orange
                         }
-
-                        // Format timestamp nicely
-                        const timeString = format(new Date(activity.timestamp), "h:mm a");
-                        const isLast = index === activities.length - 1;
 
                         return (
                             <View key={activity.id || index.toString()} style={[styles.activityItem, isLast && { borderBottomWidth: 0, paddingBottom: 0 }]}>
@@ -207,5 +247,56 @@ const styles = StyleSheet.create({
     activityAmount: {
         fontSize: 15,
         fontWeight: 'bold',
+    },
+    exerciseCard: {
+        flexDirection: 'row',
+        backgroundColor: '#fffbeb', // Super light amber background
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#fde68a', // Mild amber border
+    },
+    exerciseIconWrapper: {
+        width: 60,
+        height: 60,
+        borderRadius: 16,
+        backgroundColor: '#fef3c7',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
+    },
+    exerciseContent: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    exerciseHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    exerciseName: {
+        fontSize: 17,
+        fontWeight: 'bold',
+        color: Colors.text,
+    },
+    exerciseBurnRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    exerciseCaloriesText: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#d97706', // Bold amber
+    },
+    exerciseMetaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    exerciseMetaText: {
+        fontSize: 13,
+        color: Colors.textLight,
+        fontWeight: '500',
     }
 });

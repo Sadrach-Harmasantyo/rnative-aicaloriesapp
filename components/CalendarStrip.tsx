@@ -65,19 +65,26 @@ export function CalendarStrip({ selectedDate, onSelectDate }: CalendarStripProps
                 <TouchableOpacity
                     style={[
                         styles.dateShapePill,
-                        isSelected ? styles.selectedPill : styles.defaultPill
+                        styles.defaultPill,
+                        isToday && styles.todayPill,
+                        isSelected && styles.selectedPill
                     ]}
                     onPress={() => onSelectDate(item)}
                 >
                     <Text style={[
                         styles.dayText,
-                        isSelected ? styles.selectedDayText : styles.defaultDayText
+                        styles.defaultDayText,
+                        isToday && styles.todayDayText,
+                        isSelected && styles.selectedDayText
                     ]} allowFontScaling={false}>
                         {format(item, "EEE")}
                     </Text>
 
                     <View style={styles.dateCircle}>
-                        <Text style={[styles.dateText]} allowFontScaling={false}>
+                        <Text style={[
+                            styles.dateText,
+                            isToday && !isSelected && { color: Colors.primary }
+                        ]} allowFontScaling={false}>
                             {format(item, "d")}
                         </Text>
                     </View>
@@ -130,9 +137,18 @@ const styles = StyleSheet.create({
     },
     defaultPill: {
         backgroundColor: '#f3f4f6', // Light gray background for unselected
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    todayPill: {
+        backgroundColor: '#ecfdf5', // Very light green
+        borderColor: Colors.primary,
+        borderWidth: 1,
     },
     selectedPill: {
         backgroundColor: Colors.primary, // Green background for selected
+        borderColor: Colors.primary,
+        borderWidth: 1,
     },
     dayText: {
         fontSize: 13,
@@ -141,6 +157,10 @@ const styles = StyleSheet.create({
     },
     defaultDayText: {
         color: Colors.textLight,
+    },
+    todayDayText: {
+        color: Colors.primary,
+        fontWeight: 'bold',
     },
     selectedDayText: {
         color: Colors.white,
