@@ -95,3 +95,25 @@ export const updateFitnessGoals = async (
         return false;
     }
 };
+
+export const updateWaterGoal = async (
+    userId: string,
+    newWaterGoalMl: number
+): Promise<boolean> => {
+    try {
+        const userRef = doc(db, "users", userId);
+
+        await setDoc(userRef, {
+            fitnessPlan: {
+                waterIntake: `${newWaterGoalMl}ml`
+            }
+        }, { merge: true });
+
+        console.log("Water goal updated in Firestore");
+        return true;
+    } catch (error) {
+        console.error("Error updating water goal:", error);
+        return false;
+    }
+};
+
