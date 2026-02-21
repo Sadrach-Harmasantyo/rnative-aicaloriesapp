@@ -3,7 +3,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { LinearGradient } from "expo-linear-gradient";
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarStrip } from "../../components/CalendarStrip";
 import { CaloriesCard } from "../../components/CaloriesCard";
@@ -14,6 +14,15 @@ import { WaterCard } from "../../components/WaterCard";
 export default function Index() {
   const { signOut, isSignedIn } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 100; // Trigger when within 100px of bottom
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+      setScrollTrigger(prev => prev + 1);
+    }
+  };
 
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
@@ -27,7 +36,13 @@ export default function Index() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }} // Gradient ends about 30% down the page
       >
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
           <HomeHeader />
 
           <View style={styles.calendarCardContainer}>
@@ -39,7 +54,7 @@ export default function Index() {
 
           <CaloriesCard selectedDate={selectedDate} />
           <WaterCard selectedDate={selectedDate} />
-          <RecentActivity selectedDate={selectedDate} />
+          <RecentActivity selectedDate={selectedDate} loadMoreTrigger={scrollTrigger} />
 
           <View style={styles.content}>
             <TouchableOpacity onPress={() => signOut()} style={[styles.button, { marginTop: 40, alignSelf: 'center' }]}>

@@ -7,10 +7,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { DailyLog, getDailyLog } from "../services/logService";
 
-export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
+export function RecentActivity({ selectedDate, loadMoreTrigger }: { selectedDate: Date, loadMoreTrigger?: number }) {
     const { userId } = useAuth();
     const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
     const [loading, setLoading] = useState(true);
+    const [displayedCount, setDisplayedCount] = useState(5);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     const fetchData = async () => {
         if (!userId) return;
@@ -19,12 +21,19 @@ export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
             const dateStr = format(selectedDate, "yyyy-MM-dd");
             const fetchedLog = await getDailyLog(userId, dateStr);
             setDailyLog(fetchedLog);
+            setDisplayedCount(5); // Reset exactly on date change/fetch
         } catch (error) {
             console.error("Error fetching recent activities:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (loadMoreTrigger && loadMoreTrigger > 0 && !loadingMore && displayedCount < (dailyLog?.activities?.length || 0)) {
+            handleLoadMore();
+        }
+    }, [loadMoreTrigger]);
 
     useEffect(() => {
         fetchData();
@@ -45,6 +54,18 @@ export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
     }
 
     const activities = dailyLog?.activities || [];
+    const sortedActivities = activities.slice().sort((a, b) => b.timestamp - a.timestamp);
+    const displayedActivities = sortedActivities.slice(0, displayedCount);
+
+    const handleLoadMore = () => {
+        setLoadingMore(true);
+
+        // Simulate a tiny network delay for UX
+        setTimeout(() => {
+            setDisplayedCount(prev => prev + 5);
+            setLoadingMore(false);
+        }, 500);
+    };
 
     return (
         <View style={styles.cardContainer}>
@@ -66,90 +87,119 @@ export function RecentActivity({ selectedDate }: { selectedDate: Date }) {
                 </View>
             ) : (
                 <View style={styles.listContainer}>
-                    {activities.slice().sort((a, b) => b.timestamp - a.timestamp).map((activity, index) => {
+                    {displayedActivities.map((activity, index) => {
                         // Format timestamp nicely for both block types
                         const timeString = format(new Date(activity.timestamp), "h:mm a");
-                        const isLast = index === activities.length - 1;
 
-                        // Special Full-Width Card for Detailed Exercise Records
-                        if (activity.type === 'exercise') {
-                            const excName = activity.title.split(' Session')[0] || 'Workout';
-                            const isRun = excName.toLowerCase().includes('run');
-                            const excIcon = isRun ? 'walk' : 'barbell';
-
-                            return (
-                                <View key={activity.id || index.toString()} style={styles.exerciseCard}>
-                                    {/* Oversized Icon Column */}
-                                    <View style={styles.exerciseIconWrapper}>
-                                        <Ionicons name={excIcon} size={36} color="#f59e0b" />
-                                    </View>
-
-                                    {/* Content Column */}
-                                    <View style={styles.exerciseContent}>
-                                        <View style={styles.exerciseHeader}>
-                                            <Text style={styles.exerciseName}>{excName}</Text>
-                                            <Text style={styles.activityTime}>{timeString}</Text>
-                                        </View>
-
-                                        <View style={styles.exerciseBurnRow}>
-                                            <Ionicons name="flame" size={16} color="#f59e0b" style={{ marginRight: 4 }} />
-                                            <Text style={styles.exerciseCaloriesText}>{activity.calories} kcal burned</Text>
-                                        </View>
-
-                                        <View style={styles.exerciseMetaRow}>
-                                            <Ionicons name="pulse" size={14} color={Colors.textLight} style={{ marginRight: 4 }} />
-                                            <Text style={styles.exerciseMetaText}>
-                                                {activity.intensity || 'Medium'} Intensity
-                                            </Text>
-                                            <Ionicons name="time-outline" size={14} color={Colors.textLight} style={{ marginLeft: 12, marginRight: 4 }} />
-                                            <Text style={styles.exerciseMetaText}>
-                                                {activity.duration || 30}m
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            );
-                        }
-
-                        // Determine icon and color based on generic content
+                        // We render a standard Full-Width Card for ALL records
                         let iconName: keyof typeof Ionicons.glyphMap = "checkmark-circle-outline";
                         let iconColor = Colors.primary;
+                        let cardBg = '#f0fdf4'; // Light green default for food
+                        let cardBorder = '#bbf7d0';
+                        let iconBg = '#dcfce7';
 
-                        if (activity.water && activity.water > 0 && (!activity.calories || activity.calories === 0)) {
+                        let mainMetricText = '';
+                        let mainMetricIcon: keyof typeof Ionicons.glyphMap = "nutrition";
+                        let mainMetricColor = Colors.primary;
+
+                        let excName = activity.title;
+
+                        // Default meta
+                        let hasMeta = false;
+                        let meta1 = '';
+                        let meta1Icon: keyof typeof Ionicons.glyphMap = "time-outline";
+                        let meta2 = '';
+                        let meta2Icon: keyof typeof Ionicons.glyphMap = "time-outline";
+
+                        if (activity.type === 'exercise') {
+                            excName = activity.title.split(' Session')[0] || 'Workout';
+                            const isRun = excName.toLowerCase().includes('run');
+                            iconName = isRun ? 'walk' : 'barbell';
+                            iconColor = '#f59e0b';
+                            cardBg = '#fffbeb';
+                            cardBorder = '#fde68a';
+                            iconBg = '#fef3c7';
+
+                            mainMetricText = `${activity.calories} kcal burned`;
+                            mainMetricIcon = 'flame';
+                            mainMetricColor = '#f59e0b';
+
+                            hasMeta = true;
+                            meta1 = `${activity.intensity || 'Medium'} Intensity`;
+                            meta1Icon = 'pulse';
+                            meta2 = `${activity.duration || 30}m`;
+                            meta2Icon = 'time-outline';
+                        } else if (activity.water && activity.water > 0 && (!activity.calories || activity.calories === 0)) {
                             iconName = "water-outline";
-                            iconColor = "#3b82f6"; // Water blue
+                            iconColor = "#3b82f6";
+                            cardBg = '#eff6ff';
+                            cardBorder = '#bfdbfe';
+                            iconBg = '#dbeafe';
+
+                            mainMetricText = `+${activity.water * 250} ml`;
+                            mainMetricIcon = 'water';
+                            mainMetricColor = '#3b82f6';
+
+                            hasMeta = true;
+                            meta1 = `+${activity.water} glass${activity.water > 1 ? 'es' : ''}`;
+                            meta1Icon = 'water-outline';
                         } else if (activity.calories && activity.calories > 0) {
                             iconName = "fast-food-outline";
-                            iconColor = "#f59e0b"; // Food orange
+                            iconColor = "#10b981"; // Emerald
+                            cardBg = '#ecfdf5';
+                            cardBorder = '#a7f3d0';
+                            iconBg = '#d1fae5';
+
+                            mainMetricText = `+${activity.calories} kcal`;
+                            mainMetricIcon = 'restaurant';
+                            mainMetricColor = '#10b981';
                         }
 
                         return (
-                            <View key={activity.id || index.toString()} style={[styles.activityItem, isLast && { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                                <View style={styles.activityItemLeft}>
-                                    <View style={[styles.iconContainer, { backgroundColor: iconColor + '20' }]}>
-                                        <Ionicons name={iconName} size={20} color={iconColor} />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.activityTitle}>{activity.title}</Text>
-                                        <Text style={styles.activityTime}>{timeString}</Text>
-                                    </View>
+                            <View key={activity.id || index.toString()} style={[styles.exerciseCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                                {/* Oversized Icon Column */}
+                                <View style={[styles.exerciseIconWrapper, { backgroundColor: iconBg }]}>
+                                    <Ionicons name={iconName} size={36} color={iconColor} />
                                 </View>
 
-                                <View style={styles.activityItemRight}>
-                                    {activity.calories ? (
-                                        <Text style={[styles.activityAmount, { color: Colors.text }]}>
-                                            +{activity.calories} kcal
-                                        </Text>
-                                    ) : null}
-                                    {activity.water ? (
-                                        <Text style={[styles.activityAmount, { color: '#3b82f6' }]}>
-                                            +{activity.water} glass{activity.water > 1 ? 'es' : ''}
-                                        </Text>
-                                    ) : null}
+                                {/* Content Column */}
+                                <View style={styles.exerciseContent}>
+                                    <View style={styles.exerciseHeader}>
+                                        <Text style={styles.exerciseName}>{excName}</Text>
+                                        <Text style={styles.activityTime}>{timeString}</Text>
+                                    </View>
+
+                                    <View style={styles.exerciseBurnRow}>
+                                        <Ionicons name={mainMetricIcon} size={16} color={mainMetricColor} style={{ marginRight: 4 }} />
+                                        <Text style={[styles.exerciseCaloriesText, { color: mainMetricColor }]}>{mainMetricText}</Text>
+                                    </View>
+
+                                    {hasMeta && (
+                                        <View style={styles.exerciseMetaRow}>
+                                            <Ionicons name={meta1Icon} size={14} color={Colors.textLight} style={{ marginRight: 4 }} />
+                                            <Text style={styles.exerciseMetaText}>
+                                                {meta1}
+                                            </Text>
+                                            {meta2 ? (
+                                                <>
+                                                    <Ionicons name={meta2Icon} size={14} color={Colors.textLight} style={{ marginLeft: 12, marginRight: 4 }} />
+                                                    <Text style={styles.exerciseMetaText}>
+                                                        {meta2}
+                                                    </Text>
+                                                </>
+                                            ) : null}
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         );
                     })}
+
+                    {displayedCount < sortedActivities.length && loadingMore && (
+                        <View style={styles.loadMoreContainer}>
+                            <ActivityIndicator size="small" color={Colors.primary} />
+                        </View>
+                    )}
                 </View>
             )}
         </View>
@@ -298,5 +348,11 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textLight,
         fontWeight: '500',
+    },
+    loadMoreContainer: {
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 8,
     }
 });

@@ -27,7 +27,9 @@ export default function TabLayout() {
     const handleActionSelect = (action: 'exercise' | 'water' | 'database' | 'scan') => {
         setAddModalVisible(false);
         // Navigate or handle based on action
-        if (action === 'water' || action === 'database') {
+        if (action === 'water') {
+            router.push('/add-water');
+        } else if (action === 'database') {
             router.push('/add-log');
         } else if (action === 'exercise') {
             router.push('/log-exercise');

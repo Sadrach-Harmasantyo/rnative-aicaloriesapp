@@ -1,17 +1,36 @@
 import { Colors } from "@/constants/Colors";
 import { useAuth } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { DailyLog, getDailyLog } from "../services/logService";
-import { getUserData, UserData } from "../services/userService";
+import { getUserData, updateWaterGoal, UserData } from "../services/userService";
 
 export function WaterCard({ selectedDate }: { selectedDate: Date }) {
     const { userId } = useAuth();
     const [userData, setUserData] = useState<UserData | null>(null);
     const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editWaterGoal, setEditWaterGoal] = useState("");
+    const [savingGoals, setSavingGoals] = useState(false);
+
+    // Helper to extract mL from goal string
+    const getMlGoal = (waterIntakeStr?: string): number => {
+        const raw = waterIntakeStr || "2L";
+        const lowerRaw = raw.toLowerCase();
+        if (lowerRaw.includes('ml')) {
+            return parseFloat(lowerRaw.replace(/[^0-9.]/g, '')) || 2000;
+        } else if (lowerRaw.includes('l')) {
+            return (parseFloat(lowerRaw.replace(/[^0-9.]/g, '')) || 2) * 1000;
+        } else {
+            const val = parseFloat(raw) || 2;
+            return val < 100 ? val * 1000 : val;
+        }
+    };
 
     const fetchData = async () => {
         if (!userId) return;
@@ -24,6 +43,10 @@ export function WaterCard({ selectedDate }: { selectedDate: Date }) {
             ]);
             setUserData(fetchedUser);
             setDailyLog(fetchedLog);
+
+            if (fetchedUser?.fitnessPlan) {
+                setEditWaterGoal(getMlGoal(fetchedUser.fitnessPlan.waterIntake).toString());
+            }
         } catch (error) {
             console.error("Error fetching water data:", error);
         } finally {
@@ -49,19 +72,33 @@ export function WaterCard({ selectedDate }: { selectedDate: Date }) {
         );
     }
 
-    // 1. Calculate the Goal in Glasses (Assume 1 Glass = 250ml)
-    // The user goal might be stored as "3L" or just "3"
-    const waterGoalRaw = userData?.fitnessPlan?.waterIntake || "2L";
-    let waterGoalLiters = 2; // default
-    if (waterGoalRaw.toLowerCase().includes('l')) {
-        waterGoalLiters = parseFloat(waterGoalRaw.replace(/[^0-9.]/g, '')) || 2;
-    } else {
-        waterGoalLiters = parseFloat(waterGoalRaw) || 2;
-    }
-
-    const mlGoal = waterGoalLiters * 1000;
+    const mlGoal = getMlGoal(userData?.fitnessPlan?.waterIntake);
     const ML_PER_GLASS = 250;
     const totalGlassesGoal = Math.ceil(mlGoal / ML_PER_GLASS);
+
+    const handleSaveGoal = async () => {
+        if (!userId) return;
+        setSavingGoals(true);
+
+        const newGoalMl = parseInt(editWaterGoal) || 2000;
+        const success = await updateWaterGoal(userId, newGoalMl);
+
+        if (success) {
+            setUserData(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    fitnessPlan: {
+                        ...prev.fitnessPlan!,
+                        waterIntake: `${newGoalMl}ml`
+                    }
+                };
+            });
+            setEditModalVisible(false);
+        }
+
+        setSavingGoals(false);
+    };
 
     // Only keep 1 row, maximum 9 glasses.
     const MAX_GLASSES_UI = 9;
@@ -96,15 +133,18 @@ export function WaterCard({ selectedDate }: { selectedDate: Date }) {
         renderGlasses.push(<Image key={`empty-${i}`} source={require('../assets/images/empty_glass.png')} style={styles.glassImage} resizeMode="contain" />);
     }
 
-    const glassesLeftRaw = totalGlassesGoal - consumedGlassesRaw;
-    const glassesLeft = Math.max(0, glassesLeftRaw);
+    const consumedMl = consumedGlassesRaw * ML_PER_GLASS;
+    const glassesLeft = Math.max(0, totalGlassesGoal - consumedGlassesRaw);
 
     return (
         <View style={styles.cardContainer}>
             <View style={styles.headerRow}>
-                <Text style={styles.headerText}>Water</Text>
+                <View>
+                    <Text style={styles.headerText}>Water</Text>
+                    <Text style={styles.waterCountSubtitle}>{consumedMl} ml / {mlGoal} ml</Text>
+                </View>
 
-                <TouchableOpacity style={styles.editButton} onPress={() => { }}>
+                <TouchableOpacity style={styles.editButton} onPress={() => setEditModalVisible(true)}>
                     <Text style={styles.editButtonText}>Edit</Text>
                 </TouchableOpacity>
             </View>
@@ -124,6 +164,50 @@ export function WaterCard({ selectedDate }: { selectedDate: Date }) {
                     </Text>
                 )}
             </View>
+
+            {/* Edit Water Goal Modal */}
+            <Modal
+                visible={editModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setEditModalVisible(false)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.modalOverlay}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Daily Hydration Goal</Text>
+                            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                                <Ionicons name="close" size={24} color={Colors.textLight} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.modalForm}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Water Goal (ml)</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    keyboardType="numeric"
+                                    value={editWaterGoal}
+                                    onChangeText={setEditWaterGoal}
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                style={[styles.saveButton, savingGoals && styles.saveButtonDisabled]}
+                                onPress={handleSaveGoal}
+                                disabled={savingGoals}
+                            >
+                                <Text style={styles.saveButtonText}>
+                                    {savingGoals ? "Saving..." : "Save Goal"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </View>
     );
 }
@@ -153,6 +237,12 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "bold",
         color: Colors.text,
+    },
+    waterCountSubtitle: {
+        fontSize: 14,
+        color: Colors.textLight,
+        fontWeight: '500',
+        marginTop: 2,
     },
     editButton: {
         flexDirection: "row",
@@ -191,5 +281,67 @@ const styles = StyleSheet.create({
     footerHighlight: {
         fontWeight: "bold",
         color: '#3b82f6', // Water blue
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    modalContent: {
+        backgroundColor: Colors.white,
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: Colors.text,
+    },
+    modalForm: {
+        gap: 20,
+    },
+    inputGroup: {
+        gap: 8,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: Colors.text,
+    },
+    input: {
+        backgroundColor: Colors.inputBackground || "#f9fafb",
+        borderWidth: 1,
+        borderColor: Colors.inputBorder || "#e5e7eb",
+        borderRadius: 12,
+        padding: 16,
+        fontSize: 16,
+        color: Colors.text,
+    },
+    saveButton: {
+        backgroundColor: Colors.primary,
+        padding: 16,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 10,
+    },
+    saveButtonDisabled: {
+        opacity: 0.7,
+    },
+    saveButtonText: {
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: "600",
     }
 });
