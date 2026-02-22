@@ -168,11 +168,6 @@ export function RecentActivity({ selectedDate, loadMoreTrigger }: { selectedDate
 
                             meta1 = activity.servingInfo || extractedServing || '1 Serving';
                             meta1Icon = 'pie-chart-outline';
-
-                            if (!activity.isScanned && (activity.protein !== undefined || activity.carbs !== undefined || activity.fat !== undefined)) {
-                                meta2 = `P: ${activity.protein || 0}g  C: ${activity.carbs || 0}g  F: ${activity.fat || 0}g`;
-                                meta2Icon = 'nutrition-outline';
-                            }
                         }
 
                         return (

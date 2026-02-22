@@ -3,7 +3,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { LinearGradient } from "expo-linear-gradient";
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarStrip } from "../../components/CalendarStrip";
 import { CaloriesCard } from "../../components/CaloriesCard";
@@ -12,7 +12,7 @@ import { RecentActivity } from "../../components/RecentActivity";
 import { WaterCard } from "../../components/WaterCard";
 
 export default function Index() {
-  const { signOut, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [scrollTrigger, setScrollTrigger] = useState(0);
 
@@ -55,12 +55,6 @@ export default function Index() {
           <CaloriesCard selectedDate={selectedDate} />
           <WaterCard selectedDate={selectedDate} />
           <RecentActivity selectedDate={selectedDate} loadMoreTrigger={scrollTrigger} />
-
-          <View style={styles.content}>
-            <TouchableOpacity onPress={() => signOut()} style={[styles.button, { marginTop: 40, alignSelf: 'center' }]}>
-              <Text style={styles.buttonText}>Sign Out (Dev)</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
