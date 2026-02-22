@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
 import { Tabs, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { AddActionModal } from "../../components/AddActionModal";
+import { ImagePickerModal } from "../../components/ImagePickerModal";
 import { Colors } from "../../constants/Colors";
 
 // Custom Floating Action Button
@@ -22,6 +24,7 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
 
 export default function TabLayout() {
     const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const [isPickerModalVisible, setPickerModalVisible] = useState(false);
     const router = useRouter();
 
     const handleActionSelect = (action: 'exercise' | 'water' | 'database' | 'scan') => {
@@ -33,8 +36,44 @@ export default function TabLayout() {
             router.push('/search-food');
         } else if (action === 'exercise') {
             router.push('/log-exercise');
+        } else if (action === 'scan') {
+            setPickerModalVisible(true);
         } else {
             console.log(`Action ${action} selected - functionality to be built`);
+        }
+    };
+
+    const handleCamera = async () => {
+        setPickerModalVisible(false);
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Permission Required", "Camera access is needed to take pictures.");
+            return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            router.push({ pathname: '/analyze-food', params: { imageUri: result.assets[0].uri } });
+        }
+    };
+
+    const handleGallery = async () => {
+        setPickerModalVisible(false);
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert("Permission Required", "Gallery access is needed to select pictures.");
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            router.push({ pathname: '/analyze-food', params: { imageUri: result.assets[0].uri } });
         }
     };
 
@@ -87,6 +126,13 @@ export default function TabLayout() {
                 visible={isAddModalVisible}
                 onClose={() => setAddModalVisible(false)}
                 onSelectAction={handleActionSelect}
+            />
+
+            <ImagePickerModal
+                visible={isPickerModalVisible}
+                onClose={() => setPickerModalVisible(false)}
+                onSelectCamera={handleCamera}
+                onSelectGallery={handleGallery}
             />
         </>
     );

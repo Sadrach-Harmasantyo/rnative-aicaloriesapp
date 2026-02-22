@@ -104,6 +104,7 @@ function InitialLayout() {
       />
       <Stack.Screen name="search-food" options={{ headerShown: false }} />
       <Stack.Screen name="log-food" options={{ headerShown: false }} />
+      <Stack.Screen name="analyze-food" options={{ headerShown: false }} />
       <Stack.Screen name="log-exercise" options={{ headerShown: false }} />
       <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
       <Stack.Screen name="manual-exercise" options={{ headerShown: false, presentation: 'modal' }} />

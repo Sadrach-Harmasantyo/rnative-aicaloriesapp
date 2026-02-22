@@ -31,6 +31,7 @@ export default function LogFoodScreen() {
         protein: string;
         carbs: string;
         fat: string;
+        isScanned?: string;
     }>();
 
     // Extract numbers from strings like "100g" -> "100", "g"
@@ -40,8 +41,11 @@ export default function LogFoodScreen() {
     if (!initialServingUnit) initialServingUnit = "Serving";
 
     // Standardize State with exact numeric default if param exists
+    const [foodName, setFoodName] = useState(params.foodName || "Unknown Food");
     const [servingAmount, setServingAmount] = useState(initialServingNum);
     const [servingUnit, setServingUnit] = useState(initialServingUnit);
+
+    const isScanned = params.isScanned === 'true';
     const [calories, setCalories] = useState(params.calories || "0");
     const [protein, setProtein] = useState(params.protein || "0");
     const [carbs, setCarbs] = useState(params.carbs || "0");
@@ -68,7 +72,7 @@ export default function LogFoodScreen() {
         setIsSaving(true);
         try {
             const today = format(new Date(), "yyyy-MM-dd");
-            const newActivityTitle = `${params.foodName} (${servingAmount} ${servingUnit})`;
+            const newActivityTitle = `${foodName} (${servingAmount} ${servingUnit})`;
 
             const success = await updateDailyLog(
                 user.id,
@@ -82,13 +86,14 @@ export default function LogFoodScreen() {
                 {
                     id: Date.now().toString(),
                     timestamp: Date.now(),
-                    title: params.foodName || "Unknown Food",
+                    title: foodName || "Unknown Food",
                     calories: calNum,
                     type: "food",
                     protein: isNaN(proNum) ? 0 : proNum,
                     carbs: isNaN(carbNum) ? 0 : carbNum,
                     fat: isNaN(fatNum) ? 0 : fatNum,
-                    servingInfo: `${servingAmount} ${servingUnit}`
+                    servingInfo: `${servingAmount} ${servingUnit}`,
+                    isScanned: isScanned
                 }
             );
 
@@ -124,7 +129,18 @@ export default function LogFoodScreen() {
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
                     {/* Hero Title */}
-                    <Text style={styles.foodNameTitle}>{params.foodName || "Unknown Food"}</Text>
+                    {isScanned ? (
+                        <TextInput
+                            style={styles.foodNameInput}
+                            value={foodName}
+                            onChangeText={setFoodName}
+                            placeholder="Food Name"
+                            placeholderTextColor={Colors.textLight}
+                            multiline
+                        />
+                    ) : (
+                        <Text style={styles.foodNameTitle}>{foodName}</Text>
+                    )}
 
                     {/* Serving Input */}
                     <View style={styles.inputGroup}>
@@ -138,7 +154,17 @@ export default function LogFoodScreen() {
                                 placeholder="1"
                                 placeholderTextColor={Colors.textLight}
                             />
-                            <Text style={styles.servingSuffix}>{servingUnit}</Text>
+                            {isScanned ? (
+                                <TextInput
+                                    style={styles.servingSuffixInput}
+                                    value={servingUnit}
+                                    onChangeText={setServingUnit}
+                                    placeholder="unit"
+                                    placeholderTextColor={Colors.textLight}
+                                />
+                            ) : (
+                                <Text style={styles.servingSuffix}>{servingUnit}</Text>
+                            )}
                         </View>
                     </View>
 
@@ -265,6 +291,19 @@ const styles = StyleSheet.create({
         marginBottom: 32,
         lineHeight: 40,
     },
+    foodNameInput: {
+        fontSize: 32,
+        fontWeight: '900',
+        color: Colors.text,
+        marginBottom: 32,
+        lineHeight: 40,
+        backgroundColor: '#f9fafb',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
     inputGroup: {
         marginBottom: 24,
     },
@@ -298,6 +337,15 @@ const styles = StyleSheet.create({
         color: Colors.textLight,
         fontWeight: 'bold',
         marginLeft: 8,
+    },
+    servingSuffixInput: {
+        fontSize: 16,
+        color: Colors.textLight,
+        fontWeight: 'bold',
+        marginLeft: 8,
+        minWidth: 80,
+        textAlign: 'right',
+        paddingVertical: 14,
     },
     giantInput: {
         fontSize: 24,
