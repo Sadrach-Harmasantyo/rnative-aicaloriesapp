@@ -25,7 +25,7 @@ export function CalendarStrip({ selectedDate, onSelectDate }: CalendarStripProps
     useEffect(() => {
         const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Start on Monday
         const pastWeeks = 4;
-        const totalWeeks = pastWeeks + 1; // 4 past + 1 current
+        const totalWeeks = pastWeeks + 2; // 4 past + 1 current + 1 future
 
         const startDate = subWeeks(startOfCurrentWeek, pastWeeks);
 

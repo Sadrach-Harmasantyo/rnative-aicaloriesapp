@@ -136,9 +136,9 @@ export function CaloriesCard({ selectedDate }: { selectedDate: Date }) {
 
     // Remaining calories are what you have allowed to eat = Goal - Consumed + Burned
     const caloriesLeft = Math.max(0, caloriesGoal - caloriesConsumed + caloriesBurned);
-    const proteinLeft = Math.max(0, proteinGoal - proteinConsumed);
-    const carbsLeft = Math.max(0, carbsGoal - carbsConsumed);
-    const fatLeft = Math.max(0, fatGoal - fatConsumed);
+    const proteinLeft = Number(Math.max(0, proteinGoal - proteinConsumed).toFixed(2));
+    const carbsLeft = Number(Math.max(0, carbsGoal - carbsConsumed).toFixed(2));
+    const fatLeft = Number(Math.max(0, fatGoal - fatConsumed).toFixed(2));
 
     // Progress = consumed / total allowable (Goal + Burned) capped between 0 and 1
     const totalAllowed = caloriesGoal + caloriesBurned;

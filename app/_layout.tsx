@@ -102,6 +102,8 @@ function InitialLayout() {
           headerShown: false // Custom UI inside the modal
         }}
       />
+      <Stack.Screen name="search-food" options={{ headerShown: false }} />
+      <Stack.Screen name="log-food" options={{ headerShown: false }} />
       <Stack.Screen name="log-exercise" options={{ headerShown: false }} />
       <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
       <Stack.Screen name="manual-exercise" options={{ headerShown: false, presentation: 'modal' }} />
