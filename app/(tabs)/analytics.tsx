@@ -2,7 +2,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { addDays, format, startOfWeek } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -119,18 +119,21 @@ export default function AnalyticsScreen() {
                         </Pressable>
 
                         {/* Weight Card */}
-                        <View style={[styles.card, styles.weightCard]}>
-                            <View style={styles.weightHeader}>
-                                <View style={styles.scaleIconContainer}>
-                                    <Ionicons name="scale-outline" size={24} color="#3b82f6" />
+                        <TouchableOpacity style={[styles.card, styles.weightCard]} onPress={() => router.push("/log-weight")}>
+                            <View style={styles.weightCardTop}>
+                                <View style={styles.weightHeaderSmall}>
+                                    <Ionicons name="scale-outline" size={28} color="#3b82f6" />
                                 </View>
+                                <Text style={styles.cardSubtitle}>My Weight</Text>
                             </View>
-                            <Text style={styles.weightValue}>
-                                {userData?.weight ? userData.weight : "--"}
-                                <Text style={styles.weightUnit}> kg</Text>
-                            </Text>
-                            <Text style={styles.cardSubtitle}>My Weight</Text>
-                        </View>
+                            <View style={styles.weightCardBottom}>
+                                <Text style={styles.weightValue}>
+                                    {userData?.weight ? userData.weight : "--"}
+                                    <Text style={styles.weightUnit}> kg</Text>
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+                            </View>
+                        </TouchableOpacity>
                     </View>
 
                 </ScrollView>
@@ -225,11 +228,6 @@ const styles = StyleSheet.create({
     streakCard: {
         flex: 3,
     },
-    weightCard: {
-        flex: 2,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
     streakHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -259,6 +257,7 @@ const styles = StyleSheet.create({
         color: Colors.textLight,
         fontWeight: '600',
         marginTop: 2,
+        justifyContent: 'center',
     },
     weekRow: {
         flexDirection: 'row',
@@ -288,18 +287,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: Colors.textLight,
     },
-    weightHeader: {
+    weightCard: {
+        flex: 2,
+        justifyContent: 'space-between',
+    },
+    weightCardTop: {
+        alignItems: 'center',
+        gap: 8,
+    },
+    weightHeaderSmall: {
         width: 48,
         height: 48,
         borderRadius: 24,
         backgroundColor: '#eff6ff',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
     },
-    scaleIconContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
+    weightCardBottom: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginTop: 16,
     },
     weightValue: {
         fontSize: 26,

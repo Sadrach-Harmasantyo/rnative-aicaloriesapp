@@ -1,5 +1,4 @@
-
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 export interface UserData {
@@ -16,6 +15,7 @@ export interface UserData {
     birthDate?: { day: string; month: string; year: string };
     height?: number; // stored in cm or unit agnostic
     weight?: number; // stored in kg
+    weightHistory?: { weight: number; date: number }[]; // historical log
     onboardingCompleted?: boolean;
     fitnessPlan?: {
         dailyCalories: number;
@@ -117,3 +117,22 @@ export const updateWaterGoal = async (
     }
 };
 
+export const updateUserWeight = async (userId: string, newWeight: number): Promise<boolean> => {
+    try {
+        const userRef = doc(db, "users", userId);
+
+        await updateDoc(userRef, {
+            weight: newWeight,
+            weightHistory: arrayUnion({
+                weight: newWeight,
+                date: Date.now()
+            })
+        });
+
+        console.log("Weight updated and pushed to history in Firestore");
+        return true;
+    } catch (error) {
+        console.error("Error updating user weight:", error);
+        return false;
+    }
+};
