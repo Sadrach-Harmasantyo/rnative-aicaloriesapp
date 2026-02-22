@@ -14,6 +14,7 @@ export interface ActivityItem {
     carbs?: number;
     fat?: number;
     servingInfo?: string;
+    isScanned?: boolean;
 }
 
 export interface DailyLog {
