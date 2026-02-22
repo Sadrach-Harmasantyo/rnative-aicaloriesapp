@@ -10,6 +10,10 @@ export interface ActivityItem {
     type?: "food" | "exercise";
     duration?: number;
     intensity?: string;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    servingInfo?: string;
 }
 
 export interface DailyLog {

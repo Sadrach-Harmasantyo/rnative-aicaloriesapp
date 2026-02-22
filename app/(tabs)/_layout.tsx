@@ -30,7 +30,7 @@ export default function TabLayout() {
         if (action === 'water') {
             router.push('/add-water');
         } else if (action === 'database') {
-            router.push('/add-log');
+            router.push('/search-food');
         } else if (action === 'exercise') {
             router.push('/log-exercise');
         } else {

@@ -153,6 +153,26 @@ export function RecentActivity({ selectedDate, loadMoreTrigger }: { selectedDate
                             mainMetricText = `+${activity.calories} kcal`;
                             mainMetricIcon = 'restaurant';
                             mainMetricColor = '#10b981';
+
+                            hasMeta = true;
+
+                            // Handle backwards compatibility for older titles like "Potato (100g)"
+                            let extractedServing = '';
+                            if (excName.includes('(') && excName.endsWith(')')) {
+                                const lastParen = excName.lastIndexOf(' (');
+                                if (lastParen !== -1) {
+                                    extractedServing = excName.substring(lastParen + 2, excName.length - 1);
+                                    excName = excName.substring(0, lastParen);
+                                }
+                            }
+
+                            meta1 = activity.servingInfo || extractedServing || '1 Serving';
+                            meta1Icon = 'pie-chart-outline';
+
+                            if (activity.protein !== undefined || activity.carbs !== undefined || activity.fat !== undefined) {
+                                meta2 = `P: ${activity.protein || 0}g  C: ${activity.carbs || 0}g  F: ${activity.fat || 0}g`;
+                                meta2Icon = 'nutrition-outline';
+                            }
                         }
 
                         return (
@@ -165,7 +185,7 @@ export function RecentActivity({ selectedDate, loadMoreTrigger }: { selectedDate
                                 {/* Content Column */}
                                 <View style={styles.exerciseContent}>
                                     <View style={styles.exerciseHeader}>
-                                        <Text style={styles.exerciseName}>{excName}</Text>
+                                        <Text style={[styles.exerciseName, { flexShrink: 1, marginRight: 8 }]} numberOfLines={1}>{excName}</Text>
                                         <Text style={styles.activityTime}>{timeString}</Text>
                                     </View>
 
