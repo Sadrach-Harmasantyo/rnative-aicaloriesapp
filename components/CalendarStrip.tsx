@@ -1,4 +1,4 @@
-import { addDays, format, isSameDay, startOfWeek, subWeeks } from "date-fns";
+import { addDays, format, isAfter, isSameDay, startOfDay, startOfWeek, subWeeks } from "date-fns";
 import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../constants/Colors";
@@ -21,35 +21,39 @@ export function CalendarStrip({ selectedDate, onSelectDate }: CalendarStripProps
 
     const today = new Date();
 
-    // Generate past weeks and current week ONLY
+    // Generate past weeks and current week ONLY, capping deeply at exactly today
     useEffect(() => {
-        const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Start on Monday
+        const todayStart = startOfDay(today);
+        const startOfCurrentWeek = startOfWeek(todayStart, { weekStartsOn: 1 }); // Start on Monday
         const pastWeeks = 4;
-        const totalWeeks = pastWeeks + 2; // 4 past + 1 current + 1 future
 
         const startDate = subWeeks(startOfCurrentWeek, pastWeeks);
 
         const generatedDates = [];
-        for (let i = 0; i < totalWeeks * 7; i++) {
-            generatedDates.push(addDays(startDate, i));
+        let currentDate = startDate;
+
+        // Push every date exactly up to today
+        while (!isAfter(currentDate, todayStart)) {
+            generatedDates.push(currentDate);
+            currentDate = addDays(currentDate, 1);
         }
+
         setDates(generatedDates);
     }, []);
 
-    // Initial scroll to the start of the week containing today or selected date
+    // Initial scroll to center the selected date
     useEffect(() => {
         if (dates.length > 0 && flatListRef.current) {
-            // Find index of the Monday of the week containing the selected date
-            const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-            const selectedWeekIndex = dates.findIndex(d => isSameDay(d, weekStart));
+            // Find the exact index of the selected date
+            const selectedIndex = dates.findIndex(d => isSameDay(d, selectedDate));
 
-            if (selectedWeekIndex !== -1) {
+            if (selectedIndex !== -1) {
                 setTimeout(() => {
                     flatListRef.current?.scrollToIndex({
-                        index: selectedWeekIndex,
+                        index: selectedIndex,
                         animated: true,
-                        // viewPosition 0 aligns the start of the week exactly to the left edge
-                        viewPosition: 0,
+                        // viewPosition 0.5 automatically centers the item in the list's visible area
+                        viewPosition: 0.5,
                     });
                 }, 100);
             }
@@ -102,8 +106,6 @@ export function CalendarStrip({ selectedDate, onSelectDate }: CalendarStripProps
                 renderItem={renderItem}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                pagingEnabled // Snaps by width of the screen
-                snapToInterval={width - 32} // Card padding compensation
                 decelerationRate="fast"
                 contentContainerStyle={styles.listContainer}
                 getItemLayout={(data, index) => (
