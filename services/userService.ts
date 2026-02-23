@@ -28,6 +28,13 @@ export interface UserData {
         fitnessTips: string[];
         workoutPlan: string;
     };
+    aiInsights?: {
+        generatedAt: number;
+        motivation: string;
+        nutritionTip: string;
+        activityRecommendation: string;
+        overallScore: number; // 1-100 score based on today's logged progress
+    };
 }
 
 export const saveUserToFirestore = async (user: UserData) => {
@@ -133,6 +140,31 @@ export const updateUserWeight = async (userId: string, newWeight: number): Promi
         return true;
     } catch (error) {
         console.error("Error updating user weight:", error);
+        return false;
+    }
+};
+
+export const updateAiInsights = async (
+    userId: string,
+    insights: {
+        generatedAt: number;
+        motivation: string;
+        nutritionTip: string;
+        activityRecommendation: string;
+        overallScore: number;
+    }
+): Promise<boolean> => {
+    try {
+        const userRef = doc(db, "users", userId);
+
+        await setDoc(userRef, {
+            aiInsights: insights
+        }, { merge: true });
+
+        console.log("AI Insights cached safely in Firestore");
+        return true;
+    } catch (error) {
+        console.error("Error updating AI insights:", error);
         return false;
     }
 };

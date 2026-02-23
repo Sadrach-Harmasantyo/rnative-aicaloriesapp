@@ -4,11 +4,15 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { BarChart, LineChart, StackedBarChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AiBentoGrid } from "../../components/AiBentoGrid";
 import { Colors } from "../../constants/Colors";
 import { getDailyLog } from "../../services/logService";
 import { getUserData, UserData } from "../../services/userService";
+
+const { width } = Dimensions.get("window");
 
 interface DayStreak {
     label: string;
@@ -21,6 +25,17 @@ export default function AnalyticsScreen() {
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [weekStreak, setWeekStreak] = useState<DayStreak[]>([]);
+    const [chartData, setChartData] = useState<{ labels: string[], data: number[] }>({ labels: [], data: [] });
+
+    // New Weekly Energy States
+    const [energyChartData, setEnergyChartData] = useState<{ labels: string[], data: number[][] }>({ labels: [], data: [] });
+    const [weeklyBurnedTotal, setWeeklyBurnedTotal] = useState(0);
+    const [weeklyConsumedTotal, setWeeklyConsumedTotal] = useState(0);
+
+    // New Weekly Water States
+    const [waterChartData, setWaterChartData] = useState<{ labels: string[], data: number[] }>({ labels: [], data: [] });
+    const [weeklyWaterTotal, setWeeklyWaterTotal] = useState(0);
+
     const [currentStreakCount, setCurrentStreakCount] = useState(0);
     const [streakModalVisible, setStreakModalVisible] = useState(false);
 
@@ -33,9 +48,21 @@ export default function AnalyticsScreen() {
             const user = await getUserData(userId);
             setUserData(user);
 
-            // Fetch Current Week Streak Data
+            // Fetch Current Week Streak & Chart Data
             const start = startOfWeek(new Date(), { weekStartsOn: 0 }); // Sunday start
             const weeklyData: DayStreak[] = [];
+            const chartLabels: string[] = [];
+            const chartCalories: number[] = [];
+
+            const energyChartLabels: string[] = [];
+            const energyChartValues: number[][] = [];
+            let totalBurned = 0;
+            let totalConsumed = 0;
+
+            const waterChartLabels: string[] = [];
+            const waterChartValues: number[] = [];
+            let totalWater = 0;
+
             let streakCount = 0;
 
             for (let i = 0; i < 7; i++) {
@@ -46,6 +73,11 @@ export default function AnalyticsScreen() {
                 // Check if user has ANY activity or consumed calories logged on this specific day
                 const hasActivity = (log.activities && log.activities.length > 0) || log.caloriesConsumed > 0 || log.waterConsumed > 0;
 
+                // Track daily calories for chart (limit negative boundaries)
+                const safeCalories = Math.max(0, log.caloriesConsumed || 0);
+                const safeBurned = Math.max(0, log.caloriesBurned || 0);
+                const safeWater = Math.max(0, log.waterConsumed || 0);
+
                 if (hasActivity) {
                     streakCount++;
                 }
@@ -55,9 +87,34 @@ export default function AnalyticsScreen() {
                     modalLabel: format(dayDate, "EEE"), // Sun, Mon, Tue
                     hasActivity
                 });
+
+                chartLabels.push(format(dayDate, "EEE"));
+                chartCalories.push(safeCalories);
+
+                energyChartLabels.push(format(dayDate, "EEE"));
+                // Stacked chart format: [Burned, Consumed]
+                energyChartValues.push([safeBurned, safeCalories]);
+
+                waterChartLabels.push(format(dayDate, "EEE"));
+                // Convert glasses to ml (assuming 1 glass = 250ml)
+                const safeMl = safeWater * 250;
+                waterChartValues.push(safeMl);
+
+                totalBurned += safeBurned;
+                totalConsumed += safeCalories;
+                totalWater += safeMl;
             }
 
             setWeekStreak(weeklyData);
+            setChartData({ labels: chartLabels, data: chartCalories });
+
+            setEnergyChartData({ labels: energyChartLabels, data: energyChartValues });
+            setWeeklyBurnedTotal(totalBurned);
+            setWeeklyConsumedTotal(totalConsumed);
+
+            setWaterChartData({ labels: waterChartLabels, data: waterChartValues });
+            setWeeklyWaterTotal(totalWater);
+
             setCurrentStreakCount(streakCount);
 
         } catch (error) {
@@ -90,7 +147,12 @@ export default function AnalyticsScreen() {
                 end={{ x: 0, y: 0.3 }}
             >
                 <ScrollView contentContainerStyle={styles.scrollContent}>
+
                     <Text style={styles.title}>Progress</Text>
+
+                    <View style={{ marginBottom: 16 }}>
+                        <AiBentoGrid selectedDate={new Date()} />
+                    </View>
 
                     <View style={styles.cardsRow}>
                         {/* Daily Streak Card */}
@@ -134,6 +196,198 @@ export default function AnalyticsScreen() {
                                 <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
                             </View>
                         </TouchableOpacity>
+                    </View>
+
+                    {/* Weekly Calories Chart */}
+                    <View style={[styles.card, styles.chartCard]}>
+                        <View style={styles.chartHeader}>
+                            <View style={styles.chartTitleRow}>
+                                <Ionicons name="bar-chart" size={20} color={Colors.primary} />
+                                <Text style={styles.chartTitle}>Calories Consumed</Text>
+                            </View>
+                            <Text style={styles.cardSubtitle}>This Week</Text>
+                        </View>
+
+                        {chartData.labels.length > 0 && (
+                            <BarChart
+                                data={{
+                                    labels: chartData.labels,
+                                    datasets: [{ data: chartData.data }]
+                                }}
+                                width={width - 88} // Screen width minus padding & margins
+                                height={220}
+                                yAxisLabel=""
+                                yAxisSuffix=" kcal"
+                                yAxisInterval={1}
+                                chartConfig={{
+                                    backgroundColor: Colors.white,
+                                    backgroundGradientFrom: Colors.white,
+                                    backgroundGradientTo: Colors.white,
+                                    decimalPlaces: 0,
+                                    color: (opacity = 1) => `rgba(41, 143, 80, ${opacity})`, // App Primary Green #298f50
+                                    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`, // Gray-500 for text
+                                    style: {
+                                        borderRadius: 16,
+                                    },
+                                    barPercentage: 0.6,
+                                    propsForBackgroundLines: {
+                                        strokeWidth: 1,
+                                        stroke: "#e5e7eb",
+                                        strokeDasharray: "0",
+                                    },
+                                }}
+                                style={{
+                                    marginVertical: 8,
+                                    borderRadius: 16,
+                                    marginLeft: -10, // Small negative margin to align Y axis tightly
+                                }}
+                                showValuesOnTopOfBars={false} // Clean modern look
+                                fromZero={true}
+                            />
+                        )}
+                    </View>
+
+                    {/* Weekly Energy Chart */}
+                    <View style={[styles.card, styles.chartCard]}>
+                        <View style={styles.chartHeader}>
+                            <View style={styles.chartTitleRow}>
+                                <Ionicons name="flash" size={20} color="#f59e0b" />
+                                <Text style={styles.chartTitle}>Weekly Energy</Text>
+                            </View>
+                            <Text style={styles.cardSubtitle}>This Week</Text>
+                        </View>
+
+                        <View style={styles.energySummaryRow}>
+                            <View style={styles.energySummaryCol}>
+                                <Text style={styles.energySummaryValue}>{weeklyBurnedTotal}</Text>
+                                <Text style={styles.energySummaryLabel}>Burned</Text>
+                            </View>
+                            <View style={styles.energySummaryDivider} />
+                            <View style={styles.energySummaryCol}>
+                                <Text style={styles.energySummaryValue}>{weeklyConsumedTotal}</Text>
+                                <Text style={styles.energySummaryLabel}>Consumed</Text>
+                            </View>
+                            <View style={styles.energySummaryDivider} />
+                            <View style={styles.energySummaryCol}>
+                                <Text style={styles.energySummaryValue}>{weeklyConsumedTotal - weeklyBurnedTotal}</Text>
+                                <Text style={styles.energySummaryLabel}>Difference</Text>
+                            </View>
+                        </View>
+
+                        {energyChartData.labels.length > 0 && (
+                            <StackedBarChart
+                                data={{
+                                    labels: energyChartData.labels,
+                                    data: energyChartData.data,
+                                    barColors: ["#f59e0b", "#298f50"], // Amber for Burned, Green for Consumed
+                                    legend: [] // Intentionally blank, custom legend building below
+                                }}
+                                hideLegend={true}
+                                width={width - 88} // Screen width minus padding & margins
+                                height={220}
+                                yAxisLabel=""
+                                yAxisSuffix=""
+                                formatYLabel={(yValue) => Math.round(Number(yValue)).toString()}
+                                chartConfig={{
+                                    backgroundColor: Colors.white,
+                                    backgroundGradientFrom: Colors.white,
+                                    backgroundGradientTo: Colors.white,
+                                    decimalPlaces: 0,
+                                    color: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+                                    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`, // Gray-500 for text
+                                    style: {
+                                        borderRadius: 16,
+                                    },
+                                    barPercentage: 0.6,
+                                    propsForBackgroundLines: {
+                                        strokeWidth: 1,
+                                        stroke: "#e5e7eb",
+                                        strokeDasharray: "0",
+                                    },
+                                }}
+                                style={{
+                                    marginVertical: 8,
+                                    borderRadius: 16,
+                                    marginLeft: -10,
+                                }}
+                            />
+                        )}
+
+                        <View style={styles.chartLegendContainer}>
+                            <View style={styles.chartLegendItem}>
+                                <View style={[styles.chartLegendColor, { backgroundColor: '#f59e0b' }]} />
+                                <Text style={styles.chartLegendText}>Burned</Text>
+                            </View>
+                            <View style={styles.chartLegendItem}>
+                                <View style={[styles.chartLegendColor, { backgroundColor: '#298f50' }]} />
+                                <Text style={styles.chartLegendText}>Consumed</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Weekly Water Chart */}
+                    <View style={[styles.card, styles.chartCard]}>
+                        <View style={styles.chartHeader}>
+                            <View style={styles.chartTitleRow}>
+                                <Ionicons name="water" size={20} color="#3b82f6" />
+                                <Text style={styles.chartTitle}>Water Consumption</Text>
+                            </View>
+                            <Text style={styles.cardSubtitle}>This Week</Text>
+                        </View>
+
+                        <View style={styles.energySummaryRow}>
+                            <View style={styles.energySummaryCol}>
+                                <Text style={styles.energySummaryValue}>{weeklyWaterTotal} ml</Text>
+                                <Text style={styles.energySummaryLabel}>Total</Text>
+                            </View>
+                            <View style={styles.energySummaryDivider} />
+                            <View style={styles.energySummaryCol}>
+                                <Text style={styles.energySummaryValue}>{Math.round(weeklyWaterTotal / 7)} ml</Text>
+                                <Text style={styles.energySummaryLabel}>Daily Avg</Text>
+                            </View>
+                        </View>
+
+                        {waterChartData.labels.length > 0 && (
+                            <LineChart
+                                data={{
+                                    labels: waterChartData.labels,
+                                    datasets: [{ data: waterChartData.data }]
+                                }}
+                                width={width - 88} // Screen width minus padding & margins
+                                height={220}
+                                yAxisLabel=""
+                                yAxisSuffix=" ml"
+                                yAxisInterval={1}
+                                chartConfig={{
+                                    backgroundColor: Colors.white,
+                                    backgroundGradientFrom: Colors.white,
+                                    backgroundGradientTo: Colors.white,
+                                    decimalPlaces: 0,
+                                    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`, // Blue #3b82f6
+                                    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`, // Gray-500
+                                    style: {
+                                        borderRadius: 16,
+                                    },
+                                    propsForBackgroundLines: {
+                                        strokeWidth: 1,
+                                        stroke: "#e5e7eb",
+                                        strokeDasharray: "0",
+                                    },
+                                    propsForDots: {
+                                        r: "5",
+                                        strokeWidth: "2",
+                                        stroke: "#3b82f6",
+                                    }
+                                }}
+                                bezier
+                                style={{
+                                    marginVertical: 8,
+                                    borderRadius: 16,
+                                    marginLeft: -10,
+                                }}
+                                fromZero={true}
+                            />
+                        )}
                     </View>
 
                 </ScrollView>
@@ -202,7 +456,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 24,
-        paddingBottom: 40,
+        paddingBottom: 100,
     },
     title: {
         fontSize: 32,
@@ -224,6 +478,79 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 3,
+    },
+    chartCard: {
+        marginTop: 16,
+        paddingHorizontal: 16,
+    },
+    chartHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+        paddingHorizontal: 4,
+    },
+    chartTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    chartTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: Colors.text,
+    },
+    energySummaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#f9fafb',
+        borderRadius: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        marginBottom: 16,
+    },
+    energySummaryCol: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    energySummaryDivider: {
+        width: 1,
+        height: 30,
+        backgroundColor: '#e5e7eb',
+    },
+    energySummaryValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: Colors.text,
+    },
+    energySummaryLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: Colors.textLight,
+        marginTop: 4,
+    },
+    chartLegendContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 8,
+        gap: 24,
+    },
+    chartLegendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    chartLegendColor: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    chartLegendText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: Colors.textLight,
     },
     streakCard: {
         flex: 3,
