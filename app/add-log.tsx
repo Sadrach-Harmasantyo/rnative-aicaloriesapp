@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { updateDailyLog } from "../services/logService";
+import { cancelTodaysReminders } from "../services/notificationService";
 
 export default function AddLogScreen() {
     const { user } = useUser();
@@ -54,6 +55,9 @@ export default function AddLogScreen() {
             };
 
             await updateDailyLog(user.id, dateKey, updates, newActivity);
+
+            // Re-ward the user by silencing today's remaining local push notifications
+            await cancelTodaysReminders();
         }
 
         setLoading(false);

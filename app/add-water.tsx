@@ -7,6 +7,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/Colors";
 import { updateDailyLog } from "../services/logService";
+import { cancelTodaysReminders } from "../services/notificationService";
 
 export default function AddWater() {
     const router = useRouter();
@@ -52,6 +53,10 @@ export default function AddWater() {
             };
 
             await updateDailyLog(userId, dateKey, { waterConsumed: glassesFloat }, newActivity);
+
+            // Cancel remaining reminders today to reward user for tracking
+            await cancelTodaysReminders();
+
             router.back();
         } catch (error) {
             console.error("Error logging water", error);

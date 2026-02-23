@@ -1,5 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { updateDailyLog } from "@/services/logService";
+import { cancelTodaysReminders } from "@/services/notificationService";
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
@@ -98,7 +99,8 @@ export default function LogFoodScreen() {
             );
 
             if (success) {
-                // Return to home tab cleanly, skipping the search screen in the stack
+                // Return to home tab cleanly, reward user by cancelling today's remaining reminders
+                await cancelTodaysReminders();
                 router.replace("/(tabs)");
             } else {
                 Alert.alert("Error", "Failed to save food log. Please check your connection.");

@@ -17,6 +17,7 @@ export interface UserData {
     weight?: number; // stored in kg
     weightHistory?: { weight: number; date: number }[]; // historical log
     onboardingCompleted?: boolean;
+    isPremium?: boolean;
     fitnessPlan?: {
         dailyCalories: number;
         macros: {
@@ -34,6 +35,10 @@ export interface UserData {
         nutritionTip: string;
         activityRecommendation: string;
         overallScore: number; // 1-100 score based on today's logged progress
+    };
+    preferences?: {
+        theme: 'system' | 'light' | 'dark';
+        notifications: boolean;
     };
 }
 
@@ -54,6 +59,7 @@ export const saveUserToFirestore = async (user: UserData) => {
                 ...user,
                 createdAt: Date.now(),
                 onboardingCompleted: false, // Default to false for new users
+                isPremium: false, // Default tracking flag
             });
             console.log("New user created in Firestore");
         }
@@ -165,6 +171,25 @@ export const updateAiInsights = async (
         return true;
     } catch (error) {
         console.error("Error updating AI insights:", error);
+        return false;
+    }
+};
+
+export const updateUserPreferences = async (
+    userId: string,
+    preferences: { theme: 'system' | 'light' | 'dark'; notifications: boolean }
+): Promise<boolean> => {
+    try {
+        const userRef = doc(db, "users", userId);
+
+        await setDoc(userRef, {
+            preferences: preferences
+        }, { merge: true });
+
+        console.log("User preferences updated in Firestore");
+        return true;
+    } catch (error) {
+        console.error("Error updating preferences:", error);
         return false;
     }
 };
