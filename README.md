@@ -1,50 +1,58 @@
-# Welcome to your Expo app 👋
+# AI Calories App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
+AI Calories App is a universal React Native application built with Expo that allows users to track their daily food intake and calories using Artificial Intelligence. With features like image recognition for food, seamless authentication, and data visualization, managing your diet has never been easier.
 
-## Get started
+## Features
+- **AI Food Recognition**: Upload or take photos of your meals and let Google's Gemini AI analyze the food to estimate calories and nutritional value.
+- **Authentication**: Secure, seamless user authentication and session management powered by Clerk.
+- **Cloud Database**: Stores user data, logged meals, and preferences securely using Firebase.
+- **Local Storage**: Uses AsyncStorage for seamless local caching and offline capabilities.
+- **Charts & Statistics**: Visualize your daily and weekly calorie intake using interactive metrics and charts.
+- **Push Notifications**: Stay on track with daily scheduled reminders to log your meals.
+- **Cross-Platform**: Built to run natively on Android, iOS, and Web using Expo.
 
-1. Install dependencies
+## Tech Stack
+- [Expo](https://expo.dev) & [React Native](https://reactnative.dev/)
+- [Expo Router](https://docs.expo.dev/router/introduction/) for file-based routing
+- [Clerk](https://clerk.com/) for Authentication
+- [Google Gemini AI](https://ai.google.dev/) for intelligent food analysis and calorie estimation
+- [Firebase](https://firebase.google.com/) for backend services and data storage
+- [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) for smooth 60fps animations
+- [React Native Chart Kit](https://github.com/indiespirit/react-native-chart-kit) for data visualization
 
-   ```bash
-   npm install
-   ```
+## Getting Started
 
-2. Start the app
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed along with npm or yarn.
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Install dependencies
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Setup Environment Variables
+Create a `.env` file in the root directory and configure the required API keys for Clerk, Gemini, and Firebase:
+```env
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
 
-## Learn more
+EXPO_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_sender_id
+EXPO_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Start the app
+```bash
+npx expo start
+```
+In the output, you can choose to run the app on an Android emulator, an iOS simulator, or a physical device using the Expo Go app.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Project Structure
+- `app/` - Contains the main application screens and file-based routing logic.
+- `components/` - Reusable UI components used across screens.
+- `services/` - Integration with external services like Firebase and Notifications.
+- `assets/` - Images, fonts, and other static assets.
