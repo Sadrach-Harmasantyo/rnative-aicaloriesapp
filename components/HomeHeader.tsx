@@ -1,11 +1,27 @@
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Colors } from "../constants/Colors";
+import { getUserNotificationHistory } from "../services/notificationStorage";
 
 export function HomeHeader() {
     const { user } = useUser();
+    const [hasUnread, setHasUnread] = useState(false);
+
+    // Efficiently check for unread admin/system messages
+    useFocusEffect(
+        useCallback(() => {
+            const checkUnread = async () => {
+                if (user?.id) {
+                    const history = await getUserNotificationHistory(user.id);
+                    setHasUnread(history.some(n => !n.isRead));
+                }
+            };
+            checkUnread();
+        }, [user?.id])
+    );
 
     return (
         <View style={styles.container}>
@@ -28,8 +44,12 @@ export function HomeHeader() {
             </View>
 
             {/* Right Area: Notification Bell */}
-            <TouchableOpacity style={styles.notificationButton}>
+            <TouchableOpacity
+                style={styles.notificationButton}
+                onPress={() => router.push('/notifications')}
+            >
                 <Ionicons name="notifications-outline" size={24} color={Colors.text} />
+                {hasUnread && <View style={styles.badgeLine} />}
             </TouchableOpacity>
         </View>
     );
@@ -84,5 +104,16 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.inputBackground,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    badgeLine: {
+        position: 'absolute',
+        top: 10,
+        right: 12,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: Colors.danger || '#ef4444',
+        borderWidth: 2,
+        borderColor: Colors.inputBackground,
     }
 });

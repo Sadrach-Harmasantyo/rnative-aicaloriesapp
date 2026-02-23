@@ -4,6 +4,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { Colors } from "../constants/Colors";
+import { registerForPushNotificationsAsync, scheduleDailyReminders } from "../services/notificationService";
+import { syncAdminBroadcasts } from "../services/notificationStorage";
 import { getUserData, saveUserToFirestore } from "../services/userService";
 import { tokenCache } from "../utils/tokenCache";
 
@@ -86,6 +88,25 @@ function InitialLayout() {
         lastName: user.lastName,
         profileImage: user.imageUrl,
       });
+
+      // --- NOTIFICATION INITIALIZATION BOOT STRAP ---
+      const initNotifications = async () => {
+        try {
+          await registerForPushNotificationsAsync();
+          const userData = await getUserData(user.id);
+          const isPremium = userData?.isPremium || false;
+
+          // Sync any global broadcasts into the ledger
+          await syncAdminBroadcasts(user.id, isPremium);
+
+          // Schedule recurring local native device reminders
+          await scheduleDailyReminders(isPremium);
+        } catch (e) {
+          console.error("Error initializing Push Notifications:", e);
+        }
+      };
+
+      initNotifications();
     }
   }, [isSignedIn, user]);
 
@@ -111,6 +132,12 @@ function InitialLayout() {
       <Stack.Screen name="calculated-calories" options={{ headerShown: false }} />
       <Stack.Screen name="add-water" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="log-weight" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="personal-details" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="preferences" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="request-feature" options={{ headerShown: false }} />
+      <Stack.Screen name="terms-condition" options={{ headerShown: false }} />
+      <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false, presentation: 'modal' }} />
     </Stack>
   );
 }

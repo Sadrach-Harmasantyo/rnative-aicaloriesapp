@@ -7,6 +7,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/Colors";
 import { updateDailyLog } from "../services/logService";
+import { cancelTodaysReminders } from "../services/notificationService";
 
 export default function CalculatedCalories() {
     const router = useRouter();
@@ -40,6 +41,8 @@ export default function CalculatedCalories() {
         };
 
         await updateDailyLog(userId, dateKey, updates, newActivity);
+
+        await cancelTodaysReminders(); // Re-ward the user by silencing today's alerts
 
         setLoading(false);
         router.push('/(tabs)');
