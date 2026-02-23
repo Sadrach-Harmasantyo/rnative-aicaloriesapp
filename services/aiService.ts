@@ -103,3 +103,63 @@ export const analyzeFoodImage = async (base64Image: string) => {
     throw error;
   }
 };
+
+export const generateWeeklyBentoInsights = async (userData: UserData, weeklyLogs: any[]) => {
+  const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+
+  const safeWeight = userData.weight || "Unknown";
+  const safeGoal = userData.goal || "General Health";
+
+  // Calculate weekly totals
+  let totalConsumedCal = 0;
+  let totalBurnedCal = 0;
+  let totalWaterGlasses = 0;
+
+  weeklyLogs.forEach(log => {
+    totalConsumedCal += log?.caloriesConsumed || 0;
+    totalBurnedCal += log?.caloriesBurned || 0;
+    totalWaterGlasses += log?.waterConsumed || 0;
+  });
+
+  const avgConsumedCal = weeklyLogs.length > 0 ? Math.round(totalConsumedCal / weeklyLogs.length) : 0;
+  const avgBurnedCal = weeklyLogs.length > 0 ? Math.round(totalBurnedCal / weeklyLogs.length) : 0;
+  const avgWaterMl = weeklyLogs.length > 0 ? Math.round((totalWaterGlasses * 250) / weeklyLogs.length) : 0;
+
+  const prompt = `
+    You are an expert, highly motivational AI fitness coach.
+    Based on the following actual user data aggregated over the CURRENT WEEK, generate personalized, short, punchy insights to be displayed in a Bento Grid UI.
+
+    User Profile:
+    - Weight: ${safeWeight} kg
+    - Main Goal: ${safeGoal}
+    
+    This Week's Progress (Averages per day):
+    - Avg Calories Consumed: ${avgConsumedCal} kcal/day (Total: ${totalConsumedCal})
+    - Avg Calories Burned: ${avgBurnedCal} kcal/day (Total: ${totalBurnedCal})
+    - Avg Water Logged: ${avgWaterMl} ml/day (Total: ${totalWaterGlasses * 250} ml)
+
+    Analyze their performance THIS WEEK and provide structural feedback. Be extremely concise (max 2 short sentences per field).
+    
+    Provide the response in STRICT JSON format with EXACTLY this structure:
+    {
+      "motivation": "String (A punchy, highly motivating short sentence reflecting their WEEKLY effort)",
+      "nutritionTip": "String (A specific, actionable tip based on their WEEKLY calories/water average)",
+      "activityRecommendation": "String (A brief, practical physical activity recommendation for the upcoming days)",
+      "overallScore": Number (An integer from 1 to 100 representing how well they are doing THIS WEEK based on their stats)
+    }
+
+    Do not include any markdown formatting like \`\`\`json. Just return the raw JSON string.
+  `;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Error generating weekly Bento insights:", error);
+    throw error;
+  }
+};
